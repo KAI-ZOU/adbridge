@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
+          <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
             <Navbar />
             <main>{children}</main>
             <Footer />

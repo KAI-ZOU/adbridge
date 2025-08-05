@@ -13,7 +13,6 @@ import {
   Twitter,
   Youtube,
   Repeat2,
-  Zap,
   ArrowRight,
   MapPin,
   Clock,
@@ -27,7 +26,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Navbar } from "@/components/navbar"
 
 export default function CreatorMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -197,15 +195,9 @@ export default function CreatorMarketplacePage() {
         <div className="absolute top-3/4 left-3/4 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
 
-      <Navbar />
-
       <div className="container px-4 py-8 relative z-10">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#8ef0a7]/20 text-[#8ef0a7] px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Zap className="h-4 w-4" />
-            Creator-to-Creator Marketplace
-          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Grow Together with
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8ef0a7] to-emerald-400 block">
@@ -255,7 +247,7 @@ export default function CreatorMarketplacePage() {
                   <SelectTrigger className="bg-white/10 border-white/20 text-white min-w-[140px]">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20">
+                  <SelectContent className="bg-white border-gray-300">
                     <SelectItem value="all">All Categories</SelectItem>
                     <SelectItem value="tech">Tech</SelectItem>
                     <SelectItem value="fashion">Fashion</SelectItem>
@@ -268,7 +260,7 @@ export default function CreatorMarketplacePage() {
                   <SelectTrigger className="bg-white/10 border-white/20 text-white min-w-[140px]">
                     <SelectValue placeholder="Platform" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20">
+                  <SelectContent className="bg-white border-gray-300">
                     <SelectItem value="all">All Platforms</SelectItem>
                     <SelectItem value="instagram">Instagram</SelectItem>
                     <SelectItem value="tiktok">TikTok</SelectItem>

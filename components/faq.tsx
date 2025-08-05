@@ -6,52 +6,58 @@ const faqs = [
   {
     question: "How does AdBridge work?",
     answer:
-      "AdBridge uses AI to match businesses with local content creators based on audience demographics, content style, and campaign goals. Simply post your campaign requirements, and we'll connect you with the perfect creators.",
+      "AdBridge connects businesses with local content creators through our AI-powered matching system. Businesses post campaigns, creators apply, and our platform facilitates the entire collaboration process from start to finish.",
   },
   {
-    question: "What types of content creators are on the platform?",
+    question: "What types of creators can I find?",
     answer:
-      "We have creators across all major platforms including Instagram, TikTok, YouTube, Twitter, and LinkedIn. From micro-influencers to established content creators, covering niches like lifestyle, food, tech, fashion, and more.",
+      "Our platform features creators across all major social media platforms including Instagram, TikTok, YouTube, and Twitter. We have micro-influencers, nano-influencers, and established creators in various niches like fashion, food, tech, fitness, and more.",
   },
   {
     question: "How much does it cost?",
     answer:
-      "AdBridge is free to join for both businesses and creators. We only charge a small platform fee (5%) on successful campaign completions. No monthly subscriptions or hidden fees.",
+      "AdBridge charges a small commission fee only when successful collaborations are completed. There are no upfront costs or monthly fees. Pricing varies based on creator rates and campaign scope.",
   },
   {
-    question: "How do payments work?",
+    question: "How do I know if a creator is right for my brand?",
     answer:
-      "Payments are held in escrow until campaign completion. Once the business approves the content, creators receive payment within 24-48 hours. We handle all payment processing securely.",
+      "Each creator profile includes detailed analytics, past work examples, audience demographics, and engagement rates. You can also view reviews from previous collaborations and communicate directly before starting a campaign.",
   },
   {
-    question: "What if I'm not satisfied with the content?",
+    question: "What happens if I'm not satisfied with the content?",
     answer:
-      "We offer revision rounds and have a dispute resolution process. Our team reviews all campaigns to ensure quality standards are met. If issues persist, we provide full refunds.",
+      "We have a comprehensive review process and dispute resolution system. Creators must deliver content that meets the agreed specifications. If issues arise, our support team mediates to ensure fair outcomes for both parties.",
   },
   {
-    question: "Can I work with creators outside my location?",
+    question: "How long does it take to find creators?",
     answer:
-      "Yes! While we specialize in local connections, you can collaborate with creators anywhere. Our platform supports both local and remote campaign management.",
+      "Our AI matching system typically presents suitable creators within 24 hours of posting your campaign. The actual collaboration timeline depends on your specific requirements and the creators' availability.",
   },
 ]
 
 export default function FAQ() {
   return (
-    <section className="py-24 px-4">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-24 bg-gradient-to-b from-transparent to-black/20">
+      <div className="container px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Frequently Asked Questions</h2>
-          <p className="text-xl text-white/70 max-w-2xl mx-auto">Everything you need to know about AdBridge</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+          <p className="text-white/70 text-lg max-w-2xl mx-auto">
+            Everything you need to know about AdBridge and how it works
+          </p>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
-          <Accordion type="single" collapsible className="w-full">
+        <div className="max-w-3xl mx-auto">
+          <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`} className="border-white/10">
-                <AccordionTrigger className="text-left text-white hover:text-[#8ef0a7] transition-colors">
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-6"
+              >
+                <AccordionTrigger className="text-white hover:text-[#8ef0a7] transition-colors text-left">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-white/70 leading-relaxed">{faq.answer}</AccordionContent>
+                <AccordionContent className="text-white/70 pb-6">{faq.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
