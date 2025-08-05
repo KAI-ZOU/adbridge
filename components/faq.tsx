@@ -1,96 +1,62 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
-
-import { Card, CardContent } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 const faqs = [
   {
-    question: "How does AdBridge's AI matching work?",
+    question: "How does AdBridge work?",
     answer:
-      "Our AI analyzes factors like location, audience demographics, content style, industry alignment, and past performance to connect businesses with the most relevant creators. The system continuously learns and improves matching accuracy.",
+      "AdBridge uses AI to match businesses with local content creators based on audience demographics, content style, and campaign goals. Simply post your campaign requirements, and we'll connect you with the perfect creators.",
   },
   {
-    question: "What are the fees for using AdBridge?",
+    question: "What types of content creators are on the platform?",
     answer:
-      "Creator accounts are free with a 5% commission on successful paid collaborations. Business accounts start free with basic features, and paid plans begin at $49/month for advanced features like unlimited campaigns and detailed analytics.",
+      "We have creators across all major platforms including Instagram, TikTok, YouTube, Twitter, and LinkedIn. From micro-influencers to established content creators, covering niches like lifestyle, food, tech, fashion, and more.",
+  },
+  {
+    question: "How much does it cost?",
+    answer:
+      "AdBridge is free to join for both businesses and creators. We only charge a small platform fee (5%) on successful campaign completions. No monthly subscriptions or hidden fees.",
   },
   {
     question: "How do payments work?",
     answer:
-      "We use a secure escrow system. Businesses fund campaigns upfront, funds are held securely, and creators receive payment automatically upon successful completion and approval of deliverables. This protects both parties.",
+      "Payments are held in escrow until campaign completion. Once the business approves the content, creators receive payment within 24-48 hours. We handle all payment processing securely.",
   },
   {
-    question: "What types of content can be created?",
+    question: "What if I'm not satisfied with the content?",
     answer:
-      "AdBridge supports all major social media platforms including TikTok, Instagram, YouTube, Twitter, and more. Content types range from product reviews and tutorials to lifestyle content and behind-the-scenes footage.",
+      "We offer revision rounds and have a dispute resolution process. Our team reviews all campaigns to ensure quality standards are met. If issues persist, we provide full refunds.",
   },
   {
-    question: "Is AdBridge available in my area?",
+    question: "Can I work with creators outside my location?",
     answer:
-      "AdBridge is currently available in major cities across the United States and expanding rapidly. Our platform shows active creators in your specific location when you sign up.",
-  },
-  {
-    question: "How do I ensure content quality?",
-    answer:
-      "All creators on AdBridge are vetted and have portfolios showcasing their work. Businesses can review creator profiles, past work, and ratings before initiating collaborations. We also provide clear guidelines and approval processes.",
+      "Yes! While we specialize in local connections, you can collaborate with creators anywhere. Our platform supports both local and remote campaign management.",
   },
 ]
 
-export function FAQ() {
-  const [openItem, setOpenItem] = useState<number | null>(null)
-
-  const toggleItem = (index: number) => {
-    setOpenItem(openItem === index ? null : index)
-  }
-
+export default function FAQ() {
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl font-bold text-white mb-4">Frequently Asked Questions</h2>
-        <p className="text-white/70">Get answers to common questions about AdBridge and how it works.</p>
-      </div>
+    <section className="py-24 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Frequently Asked Questions</h2>
+          <p className="text-xl text-white/70 max-w-2xl mx-auto">Everything you need to know about AdBridge</p>
+        </div>
 
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 rounded-2xl overflow-hidden">
-            <CardContent className="p-0">
-              <button
-                className="w-full text-left p-6 hover:bg-white/5 transition-colors focus:outline-none focus:bg-white/5"
-                onClick={() => toggleItem(index)}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-white font-semibold pr-4">{faq.question}</h3>
-                  {openItem === index ? (
-                    <ChevronUp className="h-5 w-5 text-[#8ef0a7] flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-white/60 flex-shrink-0" />
-                  )}
-                </div>
-              </button>
-
-              {openItem === index && (
-                <div className="px-6 pb-6">
-                  <div className="border-t border-white/10 pt-4">
-                    <p className="text-white/80 leading-relaxed">{faq.answer}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq, index) => (
+              <AccordionItem key={index} value={`item-${index}`} className="border-white/10">
+                <AccordionTrigger className="text-left text-white hover:text-[#8ef0a7] transition-colors">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-white/70 leading-relaxed">{faq.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </div>
-
-      <div className="text-center mt-12">
-        <p className="text-white/60 mb-4">Still have questions?</p>
-        <a
-          href="/contact"
-          className="inline-flex items-center text-[#8ef0a7] hover:text-[#7de096] transition-colors font-medium"
-        >
-          Contact our support team →
-        </a>
-      </div>
-    </div>
+    </section>
   )
 }

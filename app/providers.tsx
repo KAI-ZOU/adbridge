@@ -3,13 +3,14 @@
 import type React from "react"
 
 import { SessionProvider } from "next-auth/react"
-import type { Session } from "next-auth"
+import { ThemeProvider } from "@/components/theme-provider"
 
-interface ProvidersProps {
-  children: React.ReactNode
-  session?: Session | null
-}
-
-export function Providers({ children, session }: ProvidersProps) {
-  return <SessionProvider session={session}>{children}</SessionProvider>
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        {children}
+      </ThemeProvider>
+    </SessionProvider>
+  )
 }

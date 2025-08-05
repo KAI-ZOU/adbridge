@@ -1,47 +1,66 @@
 "use client"
 
-import { signIn, getSession } from "next-auth/react"
 import { useState, useEffect } from "react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Loader2 } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/"
+  const { data: session, status } = useSession()
+
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const errorParam = searchParams.get("error")
 
   useEffect(() => {
-    // Check if user is already signed in
-    getSession().then((session) => {
-      if (session) {
-        router.push(callbackUrl)
-      }
-    })
-  }, [router, callbackUrl])
+    if (status === "authenticated") {
+      router.push(callbackUrl)
+    }
+  }, [status, router, callbackUrl])
+
+  useEffect(() => {
+    if (errorParam) {
+      setError("Authentication failed. Please try again.")
+    }
+  }, [errorParam])
 
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true)
-      const result = await signIn("google", {
-        callbackUrl,
-        redirect: false,
-      })
+      setError(null)
 
-      if (result?.ok) {
-        router.push(callbackUrl)
-      } else if (result?.error) {
-        console.error("Sign in error:", result.error)
-      }
+      await signIn("google", {
+        callbackUrl,
+        redirect: true,
+      })
     } catch (error) {
       console.error("Sign in error:", error)
-    } finally {
+      setError("An unexpected error occurred. Please try again.")
       setIsLoading(false)
     }
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    )
+  }
+
+  if (status === "authenticated") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    )
   }
 
   return (
@@ -67,11 +86,15 @@ export default function LoginPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-white">Welcome to AdBridge</CardTitle>
-            <CardDescription className="text-white/70">
-              Sign in with Google to access your creator dashboard
-            </CardDescription>
+            <CardDescription className="text-white/70">Sign in with Google to access your dashboard</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {error && (
+              <Alert className="bg-red-500/10 border-red-500/20">
+                <AlertDescription className="text-red-300">{error}</AlertDescription>
+              </Alert>
+            )}
+
             <Button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
