@@ -5,13 +5,11 @@ import { ArrowRight, BookOpen, Video, FileText, Users, Calendar, Download, Messa
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
 export default function Resources() {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">

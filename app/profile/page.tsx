@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Navbar } from "@/components/navbar"
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -75,7 +74,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      <Navbar />
 
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">

@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
 export default function ContactPage() {
@@ -100,8 +99,6 @@ export default function ContactPage() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8ef0a7]/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
-
-      <Navbar />
 
       <div className="container px-4 py-16 relative z-10">
         <div className="max-w-6xl mx-auto">
