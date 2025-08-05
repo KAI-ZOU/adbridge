@@ -12,7 +12,7 @@ importers:
         specifier: latest
         version: 0.40.0(nodemailer@7.0.5)
       '@auth/mongodb-adapter':
-        specifier: latest
+        specifier: ^3.10.0
         version: 3.10.0(mongodb@6.18.0(@aws-sdk/credential-providers@3.859.0)(@mongodb-js/zstd@2.0.1)(gcp-metadata@7.0.1)(kerberos@2.2.2)(mongodb-client-encryption@6.4.0)(snappy@7.3.1)(socks@2.8.6))(nodemailer@7.0.5)
       '@aws-sdk/credential-providers':
         specifier: latest
