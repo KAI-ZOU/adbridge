@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@auth/core": "latest",
-    "@auth/mongodb-adapter": "latest",
+    "@auth/mongodb-adapter": "^3.10.0",
     "@aws-sdk/credential-providers": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@mongodb-js/zstd": "latest",
