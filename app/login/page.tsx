@@ -74,14 +74,6 @@ export default function LoginPage() {
 
       <div className="container px-4 py-16 relative z-10">
         <div className="max-w-md mx-auto">
-          {/* Back Button */}
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-8"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to home
-          </Link>
 
           <Card className="bg-white/10 backdrop-blur-sm border-white/20 rounded-2xl">
             <CardHeader className="text-center">

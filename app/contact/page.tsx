@@ -104,13 +104,7 @@ export default function ContactPage() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to home
-            </Link>
+
 
             <h1 className="text-4xl font-bold text-white mb-4">Get in Touch</h1>
             <p className="text-white/70 text-lg max-w-2xl mx-auto">

@@ -51,10 +51,6 @@ export default function FeaturesPricingPage() {
         {/* Hero Section */}
         <section className="container px-4 md:px-6 pt-20 pb-16">
           <div className="text-center space-y-6 max-w-4xl mx-auto">
-            <Link href="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Back to home
-            </Link>
 
             <div className="space-y-4">
               <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">

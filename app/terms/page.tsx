@@ -22,13 +22,6 @@ export default function TermsPage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to home
-            </Link>
 
             <div className="flex justify-center mb-6">
               <div className="h-16 w-16 rounded-2xl bg-[#8ef0a7]/20 flex items-center justify-center">
