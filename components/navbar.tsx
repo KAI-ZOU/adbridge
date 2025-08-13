@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -14,8 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Menu, X, User, LogOut, Settings, ChevronDown } from "lucide-react"
 
+interface UserAccount {
+  email: string
+  name: string
+  image?: string
+  accountType: "business" | "creator" | null
+  profileCompleted: boolean
+}
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [userAccount, setUserAccount] = useState<UserAccount | null>(null)
   const { data: session, status } = useSession()
 
   const navigation = [
@@ -24,6 +33,33 @@ export function Navbar() {
     { name: "Resources", href: "/resources" },
     { name: "Contact", href: "/contact" },
   ]
+
+  // Fetch user account information
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch("/api/user/account")
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.error) {
+            setUserAccount(data)
+          }
+        })
+        .catch((error) => console.error("Error fetching user account:", error))
+    }
+  }, [session])
+
+  // Determine dashboard URL based on account type
+  const getDashboardUrl = () => {
+    if (!userAccount) return "/dashboard"
+
+    if (userAccount.accountType === "business" && userAccount.profileCompleted) {
+      return "/business/dashboard"
+    } else if (userAccount.accountType === "creator" && userAccount.profileCompleted) {
+      return "/creator/dashboard"
+    } else {
+      return "/dashboard" // Role selection page
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-sm">
@@ -71,7 +107,7 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-white/20">
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center gap-2 text-white">
+                  <Link href={getDashboardUrl()} className="flex items-center gap-2 text-white">
                     <User className="h-4 w-4" />
                     Dashboard
                   </Link>
@@ -134,7 +170,7 @@ export function Navbar() {
               <div className="flex flex-col space-y-4 pt-6 border-t border-white/10">
                 {session ? (
                   <>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                    <Link href={getDashboardUrl()} onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full text-white hover:bg-white/10">
                         Dashboard
                       </Button>

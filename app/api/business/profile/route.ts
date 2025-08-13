@@ -7,6 +7,7 @@ import type { BusinessProfile } from "@/lib/models/business"
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -14,13 +15,12 @@ export async function POST(request: NextRequest) {
     const data = await request.json()
     const db = await getDatabase()
 
-    // Check if profile already exists
-    const existingProfile = await db.collection("businessProfiles").findOne({
-      userId: session.user.email,
-    })
-
-    if (existingProfile) {
-      return NextResponse.json({ error: "Business profile already exists" }, { status: 400 })
+    // Validate required fields
+    const requiredFields = ["companyName", "industry", "companySize", "location", "description", "budget"]
+    for (const field of requiredFields) {
+      if (!data[field]) {
+        return NextResponse.json({ error: `${field} is required` }, { status: 400 })
+      }
     }
 
     const businessProfile: BusinessProfile = {
@@ -34,53 +34,51 @@ export async function POST(request: NextRequest) {
       budget: data.budget,
       goals: data.goals || [],
       platforms: data.platforms || [],
-      targetAudience: data.targetAudience,
+      targetAudience: data.targetAudience || "",
       createdAt: new Date(),
       updatedAt: new Date(),
     }
 
+    // Check if profile already exists
+    const existingProfile = await db.collection("businessProfiles").findOne({
+      userId: session.user.email,
+    })
+
+    if (existingProfile) {
+      return NextResponse.json({ error: "Business profile already exists" }, { status: 400 })
+    }
+
+    // Insert business profile
     const result = await db.collection("businessProfiles").insertOne(businessProfile)
 
-    // Update user role in users collection
+    // Update user account type and profile completion status
     await db.collection("users").updateOne(
       { email: session.user.email },
       {
         $set: {
-          role: "business",
+          accountType: "business",
+          profileCompleted: true,
           updatedAt: new Date(),
-        },
-        $setOnInsert: {
-          email: session.user.email,
-          name: session.user.name,
-          image: session.user.image,
-          createdAt: new Date(),
         },
       },
       { upsert: true },
     )
 
-    return NextResponse.json(
-      {
-        message: "Business profile created successfully",
-        profileId: result.insertedId,
-      },
-      { status: 201 },
-    )
+    return NextResponse.json({
+      success: true,
+      profileId: result.insertedId,
+      message: "Business profile created successfully",
+    })
   } catch (error) {
-    console.error("Business profile creation error:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Error creating business profile:", error)
+    return NextResponse.json({ error: "Failed to create business profile" }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -96,14 +94,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(profile)
   } catch (error) {
-    console.error("Get business profile error:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Error fetching business profile:", error)
+    return NextResponse.json({ error: "Failed to fetch business profile" }, { status: 500 })
   }
 }
 

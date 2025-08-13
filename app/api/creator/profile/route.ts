@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../../auth/[...nextauth]/route"
 import { getDatabase } from "@/lib/mongodb"
 import type { CreatorProfile } from "@/lib/models/creator"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession()
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -14,13 +14,12 @@ export async function POST(request: NextRequest) {
     const data = await request.json()
     const db = await getDatabase()
 
-    // Check if profile already exists
-    const existingProfile = await db.collection("creatorProfiles").findOne({
-      userId: session.user.email,
-    })
-
-    if (existingProfile) {
-      return NextResponse.json({ error: "Creator profile already exists" }, { status: 400 })
+    // Validate required fields
+    const requiredFields = ["creatorName", "handle", "bio", "location", "categories"]
+    for (const field of requiredFields) {
+      if (!data[field]) {
+        return NextResponse.json({ error: `${field} is required` }, { status: 400 })
+      }
     }
 
     const creatorProfile: CreatorProfile = {
@@ -33,61 +32,50 @@ export async function POST(request: NextRequest) {
       platforms: data.platforms || [],
       contentTypes: data.contentTypes || [],
       rates: {
-        shoutout: Number.parseFloat(data.rates?.shoutout) || 0,
-        story: Number.parseFloat(data.rates?.story) || 0,
-        retweet: Number.parseFloat(data.rates?.retweet) || 0,
-        collab: Number.parseFloat(data.rates?.collab) || 0,
+        shoutout: data.rates?.shoutout || 0,
+        story: data.rates?.story || 0,
+        retweet: data.rates?.retweet || 0,
+        collab: data.rates?.collab || 0,
       },
       portfolio: data.portfolio || [],
-      rating: 5.0,
+      rating: 0,
       totalEarnings: 0,
       completedCampaigns: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
 
+    // Insert creator profile
     const result = await db.collection("creatorProfiles").insertOne(creatorProfile)
 
-    // Update user role in users collection
+    // Update user account type and profile completion status
     await db.collection("users").updateOne(
       { email: session.user.email },
       {
         $set: {
-          role: "creator",
+          accountType: "creator",
+          profileCompleted: true,
           updatedAt: new Date(),
-        },
-        $setOnInsert: {
-          email: session.user.email,
-          name: session.user.name,
-          image: session.user.image,
-          createdAt: new Date(),
         },
       },
       { upsert: true },
     )
 
-    return NextResponse.json(
-      {
-        message: "Creator profile created successfully",
-        profileId: result.insertedId,
-      },
-      { status: 201 },
-    )
+    return NextResponse.json({
+      success: true,
+      profileId: result.insertedId,
+      message: "Creator profile created successfully",
+    })
   } catch (error) {
-    console.error("Creator profile creation error:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Error creating creator profile:", error)
+    return NextResponse.json({ error: "Failed to create creator profile" }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession()
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -103,20 +91,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(profile)
   } catch (error) {
-    console.error("Get creator profile error:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Error fetching creator profile:", error)
+    return NextResponse.json({ error: "Failed to fetch creator profile" }, { status: 500 })
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession()
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

@@ -3,25 +3,23 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft, Building2, ArrowRight, Check } from "lucide-react"
-
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { Loader2, Building2 } from "lucide-react"
 
-export default function BusinessSignupPage() {
+export default function BusinessSignup() {
   const { data: session } = useSession()
   const router = useRouter()
   const { toast } = useToast()
-  const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     companyName: "",
     industry: "",
@@ -37,57 +35,54 @@ export default function BusinessSignupPage() {
 
   const industries = [
     "Technology",
-    "Fashion & Beauty",
-    "Food & Beverage",
-    "Health & Fitness",
-    "Travel & Tourism",
-    "Education",
+    "Healthcare",
     "Finance",
+    "Retail",
+    "Food & Beverage",
+    "Fashion",
+    "Beauty",
+    "Fitness",
+    "Travel",
+    "Education",
     "Real Estate",
-    "Entertainment",
     "Other",
   ]
 
-  const companySizes = [
-    "1-10 employees",
-    "11-50 employees",
-    "51-200 employees",
-    "201-1000 employees",
-    "1000+ employees",
-  ]
+  const companySizes = ["1-10 employees", "11-50 employees", "51-200 employees", "201-500 employees", "500+ employees"]
 
-  const budgetRanges = ["$500-$2,000", "$2,000-$5,000", "$5,000-$10,000", "$10,000-$25,000", "$25,000+"]
+  const budgetRanges = ["$500-$1,000", "$1,000-$5,000", "$5,000-$10,000", "$10,000-$25,000", "$25,000+"]
 
-  const marketingGoals = [
+  const goalOptions = [
     "Brand Awareness",
     "Lead Generation",
-    "Sales Growth",
+    "Sales",
+    "Website Traffic",
+    "Social Media Growth",
     "Product Launch",
-    "Community Building",
-    "Content Creation",
+    "Event Promotion",
   ]
 
-  const platforms = ["Instagram", "TikTok", "YouTube", "Twitter", "LinkedIn", "Facebook"]
+  const platformOptions = ["Instagram", "TikTok", "YouTube", "Twitter", "LinkedIn", "Facebook"]
 
-  const handleGoalToggle = (goal: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      goals: prev.goals.includes(goal) ? prev.goals.filter((g) => g !== goal) : [...prev.goals, goal],
-    }))
+  const handleGoalChange = (goal: string, checked: boolean) => {
+    if (checked) {
+      setFormData((prev) => ({ ...prev, goals: [...prev.goals, goal] }))
+    } else {
+      setFormData((prev) => ({ ...prev, goals: prev.goals.filter((g) => g !== goal) }))
+    }
   }
 
-  const handlePlatformToggle = (platform: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      platforms: prev.platforms.includes(platform)
-        ? prev.platforms.filter((p) => p !== platform)
-        : [...prev.platforms, platform],
-    }))
+  const handlePlatformChange = (platform: string, checked: boolean) => {
+    if (checked) {
+      setFormData((prev) => ({ ...prev, platforms: [...prev.platforms, platform] }))
+    } else {
+      setFormData((prev) => ({ ...prev, platforms: prev.platforms.filter((p) => p !== platform) }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+    setIsLoading(true)
 
     try {
       const response = await fetch("/api/business/profile", {
@@ -98,6 +93,8 @@ export default function BusinessSignupPage() {
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         toast({
           title: "Success!",
@@ -105,27 +102,23 @@ export default function BusinessSignupPage() {
         })
         router.push("/business/dashboard")
       } else {
-        const error = await response.json()
         toast({
           title: "Error",
-          description: error.message || "Failed to create business profile.",
+          description: data.error || "Failed to create business profile",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Submission error:", error)
+      console.error("Error creating business profile:", error)
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
-
-  const nextStep = () => setStep(step + 1)
-  const prevStep = () => setStep(step - 1)
 
   if (!session) {
     router.push("/login")
@@ -133,350 +126,217 @@ export default function BusinessSignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black py-12">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8ef0a7]/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
 
-      <div className="container px-4 py-8 relative z-10">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-6"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to dashboard
-            </Link>
-
-            <div className="text-center">
-              <div className="h-16 w-16 rounded-2xl bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                <Building2 className="h-8 w-8 text-blue-400" />
+      <div className="container max-w-2xl mx-auto px-4 relative z-10">
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20 rounded-2xl">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-[#8ef0a7] flex items-center justify-center">
+                <Building2 className="h-8 w-8 text-black" />
               </div>
-              <h1 className="text-3xl font-bold text-white mb-2">Set Up Your Business Profile</h1>
-              <p className="text-white/70">Tell us about your business so we can match you with the right creators</p>
             </div>
-          </div>
-
-          {/* Progress Indicator */}
-          <div className="flex items-center justify-center mb-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    i <= step ? "bg-[#8ef0a7] text-black" : "bg-white/10 text-white/60"
-                  }`}
-                >
-                  {i < step ? <Check className="h-4 w-4" /> : i}
+            <CardTitle className="text-2xl font-bold text-white">Complete Your Business Profile</CardTitle>
+            <CardDescription className="text-white/70">
+              Tell us about your business to get matched with the right creators
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName" className="text-white">
+                    Company Name *
+                  </Label>
+                  <Input
+                    id="companyName"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, companyName: e.target.value }))}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    placeholder="Enter your company name"
+                    required
+                  />
                 </div>
-                {i < 3 && <div className={`w-12 h-1 mx-2 ${i < step ? "bg-[#8ef0a7]" : "bg-white/10"}`} />}
+
+                <div className="space-y-2">
+                  <Label htmlFor="industry" className="text-white">
+                    Industry *
+                  </Label>
+                  <Select
+                    value={formData.industry}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, industry: value }))}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {industries.map((industry) => (
+                        <SelectItem key={industry} value={industry}>
+                          {industry}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="companySize" className="text-white">
+                    Company Size *
+                  </Label>
+                  <Select
+                    value={formData.companySize}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, companySize: value }))}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select company size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companySizes.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="text-white">
+                    Website
+                  </Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-white">
+                    Location *
+                  </Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    placeholder="City, State/Country"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="budget" className="text-white">
+                    Monthly Budget *
+                  </Label>
+                  <Select
+                    value={formData.budget}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, budget: value }))}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select budget range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {budgetRanges.map((budget) => (
+                        <SelectItem key={budget} value={budget}>
+                          {budget}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            ))}
-          </div>
 
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 rounded-2xl">
-            <CardContent className="p-8">
-              <form onSubmit={handleSubmit}>
-                {step === 1 && (
-                  <div className="space-y-6">
-                    <div>
-                      <CardTitle className="text-white mb-2">Company Information</CardTitle>
-                      <CardDescription className="text-white/70">Basic details about your business</CardDescription>
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-white">
+                  Company Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[100px]"
+                  placeholder="Tell us about your company and what you do..."
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="targetAudience" className="text-white">
+                  Target Audience
+                </Label>
+                <Textarea
+                  id="targetAudience"
+                  value={formData.targetAudience}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, targetAudience: e.target.value }))}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  placeholder="Describe your target audience demographics and interests..."
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-white">Marketing Goals</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {goalOptions.map((goal) => (
+                    <div key={goal} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={goal}
+                        checked={formData.goals.includes(goal)}
+                        onCheckedChange={(checked) => handleGoalChange(goal, checked as boolean)}
+                        className="border-white/20 data-[state=checked]:bg-[#8ef0a7] data-[state=checked]:border-[#8ef0a7]"
+                      />
+                      <Label htmlFor={goal} className="text-white/80 text-sm">
+                        {goal}
+                      </Label>
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="companyName" className="text-white">
-                          Company Name *
-                        </Label>
-                        <Input
-                          id="companyName"
-                          value={formData.companyName}
-                          onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                          placeholder="Enter your company name"
-                          required
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="industry" className="text-white">
-                            Industry *
-                          </Label>
-                          <Select
-                            value={formData.industry}
-                            onValueChange={(value) => setFormData({ ...formData, industry: value })}
-                          >
-                            <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                              <SelectValue placeholder="Select industry" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-gray-900 border-white/20">
-                              {industries.map((industry) => (
-                                <SelectItem key={industry} value={industry}>
-                                  {industry}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="companySize" className="text-white">
-                            Company Size *
-                          </Label>
-                          <Select
-                            value={formData.companySize}
-                            onValueChange={(value) => setFormData({ ...formData, companySize: value })}
-                          >
-                            <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                              <SelectValue placeholder="Select size" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-gray-900 border-white/20">
-                              {companySizes.map((size) => (
-                                <SelectItem key={size} value={size}>
-                                  {size}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="website" className="text-white">
-                            Website
-                          </Label>
-                          <Input
-                            id="website"
-                            value={formData.website}
-                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                            placeholder="https://yourwebsite.com"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="location" className="text-white">
-                            Location *
-                          </Label>
-                          <Input
-                            id="location"
-                            value={formData.location}
-                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                            placeholder="City, State/Country"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="description" className="text-white">
-                          Company Description *
-                        </Label>
-                        <Textarea
-                          id="description"
-                          value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                          placeholder="Tell us about your business, products, and what makes you unique..."
-                          rows={4}
-                          required
-                        />
-                      </div>
+              <div className="space-y-3">
+                <Label className="text-white">Preferred Platforms</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  {platformOptions.map((platform) => (
+                    <div key={platform} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={platform}
+                        checked={formData.platforms.includes(platform)}
+                        onCheckedChange={(checked) => handlePlatformChange(platform, checked as boolean)}
+                        className="border-white/20 data-[state=checked]:bg-[#8ef0a7] data-[state=checked]:border-[#8ef0a7]"
+                      />
+                      <Label htmlFor={platform} className="text-white/80 text-sm">
+                        {platform}
+                      </Label>
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="w-full bg-[#8ef0a7] hover:bg-[#7de096] text-black"
-                      disabled={
-                        !formData.companyName ||
-                        !formData.industry ||
-                        !formData.companySize ||
-                        !formData.location ||
-                        !formData.description
-                      }
-                    >
-                      Continue
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-[#8ef0a7] hover:bg-[#7de096] text-black font-semibold py-3 rounded-xl"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Creating Profile...
+                  </>
+                ) : (
+                  "Complete Profile"
                 )}
-
-                {step === 2 && (
-                  <div className="space-y-6">
-                    <div>
-                      <CardTitle className="text-white mb-2">Marketing Goals & Budget</CardTitle>
-                      <CardDescription className="text-white/70">
-                        Help us understand your marketing objectives
-                      </CardDescription>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div>
-                        <Label className="text-white mb-3 block">Marketing Goals *</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                          {marketingGoals.map((goal) => (
-                            <div
-                              key={goal}
-                              onClick={() => handleGoalToggle(goal)}
-                              className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                                formData.goals.includes(goal)
-                                  ? "bg-[#8ef0a7]/20 border-[#8ef0a7] text-[#8ef0a7]"
-                                  : "bg-white/5 border-white/20 text-white/80 hover:bg-white/10"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
-                                    formData.goals.includes(goal) ? "bg-[#8ef0a7] border-[#8ef0a7]" : "border-white/40"
-                                  }`}
-                                >
-                                  {formData.goals.includes(goal) && <Check className="h-2 w-2 text-black" />}
-                                </div>
-                                <span className="text-sm font-medium">{goal}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="budget" className="text-white">
-                          Monthly Marketing Budget *
-                        </Label>
-                        <Select
-                          value={formData.budget}
-                          onValueChange={(value) => setFormData({ ...formData, budget: value })}
-                        >
-                          <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                            <SelectValue placeholder="Select budget range" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-900 border-white/20">
-                            {budgetRanges.map((range) => (
-                              <SelectItem key={range} value={range}>
-                                {range}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="targetAudience" className="text-white">
-                          Target Audience *
-                        </Label>
-                        <Textarea
-                          id="targetAudience"
-                          value={formData.targetAudience}
-                          onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                          placeholder="Describe your ideal customers (age, interests, demographics, etc.)"
-                          rows={3}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <Button
-                        type="button"
-                        onClick={prevStep}
-                        variant="outline"
-                        className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={nextStep}
-                        className="flex-1 bg-[#8ef0a7] hover:bg-[#7de096] text-black"
-                        disabled={!formData.goals.length || !formData.budget || !formData.targetAudience}
-                      >
-                        Continue
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-6">
-                    <div>
-                      <CardTitle className="text-white mb-2">Platform Preferences</CardTitle>
-                      <CardDescription className="text-white/70">
-                        Which platforms do you want to focus on?
-                      </CardDescription>
-                    </div>
-
-                    <div>
-                      <Label className="text-white mb-3 block">Preferred Platforms *</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {platforms.map((platform) => (
-                          <div
-                            key={platform}
-                            onClick={() => handlePlatformToggle(platform)}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                              formData.platforms.includes(platform)
-                                ? "bg-[#8ef0a7]/20 border-[#8ef0a7] text-[#8ef0a7]"
-                                : "bg-white/5 border-white/20 text-white/80 hover:bg-white/10"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
-                                  formData.platforms.includes(platform)
-                                    ? "bg-[#8ef0a7] border-[#8ef0a7]"
-                                    : "border-white/40"
-                                }`}
-                              >
-                                {formData.platforms.includes(platform) && <Check className="h-3 w-3 text-black" />}
-                              </div>
-                              <span className="font-medium">{platform}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-[#8ef0a7]/10 rounded-xl p-6 border border-[#8ef0a7]/20">
-                      <h3 className="text-white font-semibold mb-2">You're all set! 🎉</h3>
-                      <p className="text-white/80 text-sm">
-                        Your business profile will be created and you'll be able to start discovering creators right
-                        away.
-                      </p>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <Button
-                        type="button"
-                        onClick={prevStep}
-                        variant="outline"
-                        className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="submit"
-                        className="flex-1 bg-[#8ef0a7] hover:bg-[#7de096] text-black"
-                        disabled={!formData.platforms.length || isSubmitting}
-                      >
-                        {isSubmitting ? "Creating Profile..." : "Complete Setup"}
-                        <Check className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
