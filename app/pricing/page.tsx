@@ -1,21 +1,81 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { ArrowRight, CheckCircle, X } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { Check, Star, Zap, Crown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 
-export default function Pricing() {
-  const [isLoading, setIsLoading] = useState<string | null>(null)
+export default function PricingPage() {
+  const { data: session } = useSession()
+  const router = useRouter()
   const { toast } = useToast()
+  const [loading, setLoading] = useState<string | null>(null)
+
+  const plans = [
+    {
+      name: "Starter",
+      price: 29,
+      priceId: "price_starter_monthly", // Replace with actual Stripe price ID
+      description: "Perfect for small businesses getting started",
+      icon: Star,
+      features: [
+        "Up to 5 campaigns per month",
+        "Basic creator matching",
+        "Email support",
+        "Campaign analytics",
+        "Standard payment processing",
+      ],
+      popular: false,
+    },
+    {
+      name: "Professional",
+      price: 79,
+      priceId: "price_professional_monthly", // Replace with actual Stripe price ID
+      description: "Ideal for growing businesses",
+      icon: Zap,
+      features: [
+        "Up to 20 campaigns per month",
+        "Advanced creator matching",
+        "Priority support",
+        "Advanced analytics",
+        "Custom campaign templates",
+        "Bulk messaging",
+        "Performance tracking",
+      ],
+      popular: true,
+    },
+    {
+      name: "Enterprise",
+      price: 199,
+      priceId: "price_enterprise_monthly", // Replace with actual Stripe price ID
+      description: "For large businesses and agencies",
+      icon: Crown,
+      features: [
+        "Unlimited campaigns",
+        "AI-powered creator matching",
+        "24/7 dedicated support",
+        "White-label solution",
+        "Custom integrations",
+        "Advanced reporting",
+        "Account manager",
+        "Custom contracts",
+      ],
+      popular: false,
+    },
+  ]
 
   const handleSubscribe = async (priceId: string, planName: string) => {
-    setIsLoading(priceId)
+    if (!session) {
+      router.push("/login")
+      return
+    }
+
+    setLoading(priceId)
 
     try {
       const response = await fetch("/api/stripe/create-subscription", {
@@ -23,313 +83,160 @@ export default function Pricing() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ priceId, planName }),
+        body: JSON.stringify({
+          priceId,
+          planName,
+        }),
       })
 
       if (response.ok) {
-        const { url } = await response.json()
-        window.location.href = url
+        const data = await response.json()
+        // Redirect to Stripe Checkout
+        window.location.href = data.url
       } else {
-        throw new Error("Failed to create subscription")
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create subscription",
+          variant: "destructive",
+        })
       }
     } catch (error) {
+      console.error("Subscription error:", error)
       toast({
         title: "Error",
-        description: "Failed to start subscription. Please try again.",
+        description: "An error occurred while creating the subscription",
         variant: "destructive",
       })
     } finally {
-      setIsLoading(null)
+      setLoading(null)
     }
   }
 
-  const plans = {
-    monthly: [
-      {
-        name: "Starter",
-        price: "$49",
-        priceId: "price_starter_monthly",
-        description: "Perfect for small businesses getting started",
-        features: [
-          "Up to 5 active campaigns",
-          "Basic analytics dashboard",
-          "Email support",
-          "Standard matching algorithm",
-        ],
-        limitations: ["Advanced automation", "Custom reporting"],
-      },
-      {
-        name: "Professional",
-        price: "$99",
-        priceId: "price_professional_monthly",
-        description: "Ideal for growing businesses with active marketing",
-        popular: true,
-        features: [
-          "Up to 20 active campaigns",
-          "Advanced analytics & reporting",
-          "Priority email support",
-          "AI-powered optimization",
-          "Campaign automation tools",
-          "Custom dashboard",
-        ],
-        limitations: [],
-      },
-      {
-        name: "Business",
-        price: "$199",
-        priceId: "price_business_monthly",
-        description: "For established businesses scaling their advertising",
-        features: [
-          "Up to 50 active campaigns",
-          "Advanced analytics & insights",
-          "Phone & email support",
-          "Multi-user collaboration",
-          "API access",
-          "White-label options",
-        ],
-        limitations: [],
-      },
-    ],
-    annually: [
-      {
-        name: "Starter",
-        price: "$39",
-        priceId: "price_starter_annual",
-        description: "Perfect for small businesses getting started",
-        savings: "Save $120/year",
-        features: [
-          "Up to 5 active campaigns",
-          "Basic analytics dashboard",
-          "Email support",
-          "Standard matching algorithm",
-        ],
-        limitations: ["Advanced automation", "Custom reporting"],
-      },
-      {
-        name: "Professional",
-        price: "$79",
-        priceId: "price_professional_annual",
-        description: "Ideal for growing businesses with active marketing",
-        popular: true,
-        savings: "Save $240/year",
-        features: [
-          "Up to 20 active campaigns",
-          "Advanced analytics & reporting",
-          "Priority email support",
-          "AI-powered optimization",
-          "Campaign automation tools",
-          "Custom dashboard",
-        ],
-        limitations: [],
-      },
-      {
-        name: "Business",
-        price: "$159",
-        priceId: "price_business_annual",
-        description: "For established businesses scaling their advertising",
-        savings: "Save $480/year",
-        features: [
-          "Up to 50 active campaigns",
-          "Advanced analytics & insights",
-          "Phone & email support",
-          "Multi-user collaboration",
-          "API access",
-          "White-label options",
-        ],
-        limitations: [],
-      },
-    ],
-  }
-
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  Simple, Transparent Pricing
-                </h1>
-                <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                  Choose the plan that's right for your business. All plans include our core features with no hidden
-                  fees.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>14-day free trial</span>
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>No setup fees</span>
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Cancel anytime</span>
-              </div>
-            </div>
-          </div>
-        </section>
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8ef0a7]/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      </div>
 
-        {/* Pricing Plans */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
-          <div className="container px-4 md:px-6">
-            <div className="mx-auto max-w-6xl">
-              <Tabs defaultValue="monthly" className="w-full">
-                <div className="flex justify-center mb-8">
-                  <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                    <TabsTrigger value="annually">
-                      Annually
-                      <Badge variant="secondary" className="ml-2 text-xs">
-                        Save 20%
-                      </Badge>
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+      <div className="container px-4 py-16 relative z-10">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Choose Your <span className="text-[#8ef0a7]">Perfect Plan</span>
+          </h1>
+          <p className="text-white/70 text-lg max-w-2xl mx-auto">
+            Scale your influencer marketing with our flexible pricing plans designed for businesses of all sizes
+          </p>
+        </div>
 
-                {(["monthly", "annually"] as const).map((period) => (
-                  <TabsContent key={period} value={period}>
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                      {plans[period].map((plan, index) => (
-                        <Card key={plan.name} className={`relative ${plan.popular ? "border-primary shadow-lg" : ""}`}>
-                          {plan.popular && (
-                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                              <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                            </div>
-                          )}
-                          <CardHeader>
-                            <CardTitle>{plan.name}</CardTitle>
-                            <CardDescription>{plan.description}</CardDescription>
-                            <div className="mt-4 text-4xl font-bold">
-                              {plan.price}
-                              <span className="text-sm font-normal text-muted-foreground">/month</span>
-                            </div>
-                            {plan.savings && <div className="text-sm text-green-600">{plan.savings}</div>}
-                          </CardHeader>
-                          <CardContent>
-                            <ul className="grid gap-3">
-                              {plan.features.map((feature) => (
-                                <li key={feature} className="flex items-center gap-2">
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                  <span>{feature}</span>
-                                </li>
-                              ))}
-                              {plan.limitations.map((limitation) => (
-                                <li key={limitation} className="flex items-center gap-2">
-                                  <X className="h-4 w-4 text-red-500" />
-                                  <span className="text-muted-foreground">{limitation}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </CardContent>
-                          <CardFooter>
-                            <Button
-                              className="w-full"
-                              onClick={() => handleSubscribe(plan.priceId, plan.name)}
-                              disabled={isLoading === plan.priceId}
-                            >
-                              {isLoading === plan.priceId ? "Processing..." : "Start Free Trial"}
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </div>
-          </div>
-        </section>
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {plans.map((plan) => {
+            const Icon = plan.icon
+            return (
+              <Card
+                key={plan.name}
+                className={`relative bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all ${
+                  plan.popular ? "ring-2 ring-[#8ef0a7] scale-105" : ""
+                }`}
+              >
+                {plan.popular && (
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#8ef0a7] text-black">
+                    Most Popular
+                  </Badge>
+                )}
+
+                <CardHeader className="text-center pb-8">
+                  <div className="h-16 w-16 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4">
+                    <Icon className="h-8 w-8 text-[#8ef0a7]" />
+                  </div>
+                  <CardTitle className="text-white text-2xl">{plan.name}</CardTitle>
+                  <CardDescription className="text-white/70">{plan.description}</CardDescription>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold text-white">${plan.price}</span>
+                    <span className="text-white/70">/month</span>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-[#8ef0a7] flex-shrink-0" />
+                        <span className="text-white/80 text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => handleSubscribe(plan.priceId, plan.name)}
+                    disabled={loading === plan.priceId}
+                    className={`w-full ${
+                      plan.popular
+                        ? "bg-[#8ef0a7] hover:bg-[#7de096] text-black"
+                        : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                    }`}
+                  >
+                    {loading === plan.priceId ? "Processing..." : `Get Started with ${plan.name}`}
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
 
         {/* FAQ Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center mb-12">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Pricing FAQ</h2>
-                <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                  Common questions about our pricing and plans.
+        <div className="mt-20 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-white text-center mb-12">Frequently Asked Questions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-white font-semibold mb-2">Can I change my plan anytime?</h3>
+                <p className="text-white/70 text-sm">
+                  Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next
+                  billing cycle.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-2">Is there a free trial?</h3>
+                <p className="text-white/70 text-sm">
+                  We offer a 14-day free trial for all plans. No credit card required to get started.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-2">What payment methods do you accept?</h3>
+                <p className="text-white/70 text-sm">
+                  We accept all major credit cards, PayPal, and bank transfers for enterprise plans.
                 </p>
               </div>
             </div>
-            <div className="mx-auto max-w-3xl grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Can I change plans anytime?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll
-                    prorate the billing accordingly.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">What's included in the free trial?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    The 14-day free trial includes full access to all Professional plan features. No credit card
-                    required to start.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Are there any setup fees?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    No, there are no setup fees or hidden costs. You only pay the monthly or annual subscription fee for
-                    your chosen plan.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">What payment methods do you accept?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    We accept all major credit cards, PayPal, and bank transfers for annual plans. Enterprise customers
-                    can also pay by invoice.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Ready to Get Started?</h2>
-                <p className="max-w-[900px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Start your free trial today and see how AdBridge can transform your advertising strategy.
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-white font-semibold mb-2">Do you offer refunds?</h3>
+                <p className="text-white/70 text-sm">
+                  Yes, we offer a 30-day money-back guarantee if you're not satisfied with our service.
                 </p>
               </div>
-              <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2"
-                  onClick={() => handleSubscribe("price_professional_monthly", "Professional")}
-                >
-                  Start Free Trial
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Link href="/contact">
-                  <Button size="lg" variant="outline" className="border-primary-foreground bg-transparent">
-                    Contact Sales
-                  </Button>
-                </Link>
+              <div>
+                <h3 className="text-white font-semibold mb-2">Is there a setup fee?</h3>
+                <p className="text-white/70 text-sm">
+                  No setup fees for Starter and Professional plans. Enterprise plans may include a one-time setup fee.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-2">Can I cancel anytime?</h3>
+                <p className="text-white/70 text-sm">
+                  Yes, you can cancel your subscription at any time. You'll continue to have access until the end of
+                  your billing period.
+                </p>
               </div>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
   )
 }

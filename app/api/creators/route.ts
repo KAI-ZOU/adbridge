@@ -5,35 +5,80 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get("category")
-    const location = searchParams.get("location")
     const platform = searchParams.get("platform")
+    const minFollowers = searchParams.get("minFollowers")
+    const maxPrice = searchParams.get("maxPrice")
+    const search = searchParams.get("search")
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "12")
 
     const db = await getDatabase()
 
-    const query: any = {}
+    // Build filter query
+    const filter: any = {}
 
     if (category && category !== "all") {
-      query.categories = { $regex: category, $options: "i" }
-    }
-
-    if (location) {
-      query.location = { $regex: location, $options: "i" }
+      filter.categories = { $in: [category] }
     }
 
     if (platform && platform !== "all") {
-      query["platforms.platform"] = { $regex: platform, $options: "i" }
+      filter["platforms.platform"] = platform
     }
 
+    if (search) {
+      filter.$or = [
+        { creatorName: { $regex: search, $options: "i" } },
+        { bio: { $regex: search, $options: "i" } },
+        { categories: { $in: [new RegExp(search, "i")] } },
+      ]
+    }
+
+    // Get total count for pagination
+    const total = await db.collection("creatorProfiles").countDocuments(filter)
+
+    // Get creators with pagination
     const creators = await db
       .collection("creatorProfiles")
-      .find(query)
+      .find(filter)
       .sort({ rating: -1, completedCampaigns: -1 })
-      .limit(50)
+      .skip((page - 1) * limit)
+      .limit(limit)
       .toArray()
 
-    return NextResponse.json(creators)
+    // Transform data for frontend
+    const transformedCreators = creators.map((creator) => ({
+      id: creator._id.toString(),
+      name: creator.creatorName,
+      handle: creator.handle,
+      bio: creator.bio,
+      location: creator.location,
+      categories: creator.categories,
+      platforms: creator.platforms,
+      contentTypes: creator.contentTypes,
+      rates: creator.rates,
+      rating: creator.rating,
+      completedCampaigns: creator.completedCampaigns,
+      totalEarnings: creator.totalEarnings,
+      image: `/placeholder-user.jpg`, // You can add profile images later
+    }))
+
+    return NextResponse.json({
+      creators: transformedCreators,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    })
   } catch (error) {
     console.error("Get creators error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

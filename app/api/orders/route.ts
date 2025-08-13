@@ -5,39 +5,50 @@ import { getDatabase } from "@/lib/mongodb"
 import Stripe from "stripe"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2024-06-20",
 })
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { serviceId, creatorId, amount, requirements } = await request.json()
+    const { creatorId, serviceType, amount, requirements, platform } = await request.json()
     const db = await getDatabase()
+
+    // Get creator profile
+    const creator = await db.collection("creatorProfiles").findOne({
+      _id: { $oid: creatorId },
+    })
+
+    if (!creator) {
+      return NextResponse.json({ error: "Creator not found" }, { status: 404 })
+    }
 
     // Create Stripe payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert to cents
+      amount: Math.round(amount * 100), // Convert to cents
       currency: "usd",
       metadata: {
-        serviceId,
         creatorId,
-        buyerId: session.user.id,
+        buyerId: session.user.email,
+        serviceType,
+        platform,
       },
     })
 
-    // Create order
+    // Create order in database
     const order = {
-      serviceId,
       creatorId,
-      buyerId: session.user.id,
+      buyerId: session.user.email,
+      serviceType,
+      platform,
       amount,
+      requirements: requirements || "",
       status: "pending",
       stripePaymentIntentId: paymentIntent.id,
-      requirements,
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -45,55 +56,79 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection("orders").insertOne(order)
 
-    // Create conversation
-    const conversation = {
-      participants: [session.user.id, creatorId],
-      orderId: result.insertedId.toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-
-    await db.collection("conversations").insertOne(conversation)
-
     return NextResponse.json({
       orderId: result.insertedId,
       clientSecret: paymentIntent.client_secret,
+      message: "Order created successfully",
     })
   } catch (error) {
-    console.error("Order creation error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Create order error:", error)
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
-    const orderId = searchParams.get("orderId")
+    const type = searchParams.get("type") // "buyer" or "seller"
 
     const db = await getDatabase()
 
-    if (orderId) {
-      const order = await db.collection("orders").findOne({ _id: orderId })
-      return NextResponse.json(order)
-    }
+    const filter = type === "seller" ? { creatorId: session.user.email } : { buyerId: session.user.email }
 
-    // Get user's orders
-    const orders = await db
-      .collection("orders")
-      .find({
-        $or: [{ buyerId: session.user.id }, { creatorId: session.user.id }],
-      })
-      .sort({ createdAt: -1 })
-      .toArray()
+    const orders = await db.collection("orders").find(filter).sort({ createdAt: -1 }).toArray()
 
-    return NextResponse.json(orders)
+    // Get creator/buyer details for each order
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const creator = await db.collection("creatorProfiles").findOne({
+          userId: order.creatorId,
+        })
+        const buyer = await db.collection("users").findOne({
+          email: order.buyerId,
+        })
+
+        return {
+          ...order,
+          id: order._id.toString(),
+          creator: creator
+            ? {
+                name: creator.creatorName,
+                handle: creator.handle,
+                image: "/placeholder-user.jpg",
+              }
+            : null,
+          buyer: buyer
+            ? {
+                name: buyer.name,
+                email: buyer.email,
+                image: buyer.image || "/placeholder-user.jpg",
+              }
+            : null,
+        }
+      }),
+    )
+
+    return NextResponse.json({ orders: enrichedOrders })
   } catch (error) {
     console.error("Get orders error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

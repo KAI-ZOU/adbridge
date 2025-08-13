@@ -4,13 +4,13 @@ import { authOptions } from "../../auth/[...nextauth]/route"
 import Stripe from "stripe"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2024-06-20",
 })
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -18,26 +18,18 @@ export async function POST(request: NextRequest) {
 
     // Create or retrieve customer
     let customer
-    try {
-      const customers = await stripe.customers.list({
-        email: session.user.email!,
-        limit: 1,
-      })
+    const existingCustomers = await stripe.customers.list({
+      email: session.user.email,
+      limit: 1,
+    })
 
-      if (customers.data.length > 0) {
-        customer = customers.data[0]
-      } else {
-        customer = await stripe.customers.create({
-          email: session.user.email!,
-          name: session.user.name!,
-          metadata: {
-            userId: session.user.id,
-          },
-        })
-      }
-    } catch (error) {
-      console.error("Customer creation error:", error)
-      return NextResponse.json({ error: "Failed to create customer" }, { status: 500 })
+    if (existingCustomers.data.length > 0) {
+      customer = existingCustomers.data[0]
+    } else {
+      customer = await stripe.customers.create({
+        email: session.user.email,
+        name: session.user.name || "",
+      })
     }
 
     // Create checkout session
@@ -52,16 +44,25 @@ export async function POST(request: NextRequest) {
       ],
       mode: "subscription",
       success_url: `${process.env.NEXTAUTH_URL}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/pricing?cancelled=true`,
+      cancel_url: `${process.env.NEXTAUTH_URL}/pricing?canceled=true`,
       metadata: {
-        userId: session.user.id,
+        userId: session.user.email,
         planName,
       },
     })
 
-    return NextResponse.json({ url: checkoutSession.url })
+    return NextResponse.json({
+      sessionId: checkoutSession.id,
+      url: checkoutSession.url,
+    })
   } catch (error) {
-    console.error("Subscription creation error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Create subscription error:", error)
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
