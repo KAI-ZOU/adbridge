@@ -14,11 +14,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
 export default function BusinessSignupPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     companyName: "",
     industry: "",
@@ -84,10 +87,41 @@ export default function BusinessSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically save the data to your database
-    console.log("Business signup data:", formData)
-    // Redirect to business dashboard
-    router.push("/business/dashboard")
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch("/api/business/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: "Your business profile has been created successfully.",
+        })
+        router.push("/business/dashboard")
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create business profile.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Submission error:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const nextStep = () => setStep(step + 1)
@@ -431,9 +465,9 @@ export default function BusinessSignupPage() {
                       <Button
                         type="submit"
                         className="flex-1 bg-[#8ef0a7] hover:bg-[#7de096] text-black"
-                        disabled={!formData.platforms.length}
+                        disabled={!formData.platforms.length || isSubmitting}
                       >
-                        Complete Setup
+                        {isSubmitting ? "Creating Profile..." : "Complete Setup"}
                         <Check className="ml-2 h-4 w-4" />
                       </Button>
                     </div>

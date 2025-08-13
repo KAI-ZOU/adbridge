@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   Search,
   Filter,
   Star,
   Users,
-  TrendingUp,
   MessageSquare,
   Instagram,
   Twitter,
@@ -15,7 +14,6 @@ import {
   Repeat2,
   ArrowRight,
   MapPin,
-  Clock,
   DollarSign,
   Sparkles,
 } from "lucide-react"
@@ -26,10 +24,117 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+
+interface Creator {
+  _id: string
+  creatorName: string
+  handle: string
+  bio: string
+  location: string
+  categories: string[]
+  platforms: {
+    platform: string
+    handle: string
+    followers: string
+  }[]
+  rates: {
+    shoutout: number
+    story: number
+    retweet: number
+    collab: number
+  }
+  rating: number
+  totalEarnings: number
+  completedCampaigns: number
+}
 
 export default function CreatorMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [creators, setCreators] = useState<Creator[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedService, setSelectedService] = useState<any>(null)
+  const [orderRequirements, setOrderRequirements] = useState("")
+  const [isOrdering, setIsOrdering] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    fetchCreators()
+  }, [])
+
+  const fetchCreators = async () => {
+    try {
+      const response = await fetch("/api/creators")
+      if (response.ok) {
+        const data = await response.json()
+        setCreators(data)
+      }
+    } catch (error) {
+      console.error("Error fetching creators:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOrder = async (service: any, creator: Creator) => {
+    setSelectedService({ ...service, creator })
+    setOrderRequirements("")
+  }
+
+  const submitOrder = async () => {
+    if (!selectedService) return
+
+    setIsOrdering(true)
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: selectedService.id,
+          creatorId: selectedService.creator._id,
+          amount: selectedService.price,
+          requirements: orderRequirements,
+        }),
+      })
+
+      if (response.ok) {
+        const { orderId, clientSecret } = await response.json()
+
+        // Redirect to Stripe checkout or handle payment
+        toast({
+          title: "Order Created!",
+          description: "Redirecting to payment...",
+        })
+
+        // Here you would integrate with Stripe Elements or redirect to checkout
+        window.location.href = `/checkout?orderId=${orderId}&clientSecret=${clientSecret}`
+      } else {
+        throw new Error("Failed to create order")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create order. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsOrdering(false)
+      setSelectedService(null)
+    }
+  }
 
   const promoTypes = [
     {
@@ -66,95 +171,8 @@ export default function CreatorMarketplacePage() {
     },
   ]
 
-  const creators = [
-    {
-      id: 1,
-      name: "Alex Chen",
-      handle: "@alexcreates",
-      avatar: "/placeholder.svg?height=60&width=60",
-      verified: true,
-      followers: "45.2K",
-      engagement: "6.8%",
-      niche: "Tech Reviews",
-      platforms: ["youtube", "twitter", "instagram"],
-      rating: 4.9,
-      responseTime: "2 hours",
-      location: "San Francisco, CA",
-      services: [
-        { type: "shoutout", price: 25, platform: "twitter", description: "Tweet about your content" },
-        { type: "story", price: 35, platform: "instagram", description: "24hr story mention" },
-        { type: "collab", price: 150, platform: "youtube", description: "Joint video review" },
-      ],
-      recentWork: "Featured 12 creators this month",
-      tags: ["Tech", "Reviews", "Gadgets"],
-    },
-    {
-      id: 2,
-      name: "Maya Rodriguez",
-      handle: "@mayastyle",
-      avatar: "/placeholder.svg?height=60&width=60",
-      verified: true,
-      followers: "28.7K",
-      engagement: "8.2%",
-      niche: "Fashion & Lifestyle",
-      platforms: ["instagram", "tiktok"],
-      rating: 4.8,
-      responseTime: "1 hour",
-      location: "Los Angeles, CA",
-      services: [
-        { type: "shoutout", price: 30, platform: "instagram", description: "Post featuring your brand" },
-        { type: "story", price: 20, platform: "instagram", description: "Story mention with swipe-up" },
-        { type: "retweet", price: 15, platform: "twitter", description: "Retweet with comment" },
-      ],
-      recentWork: "98% positive feedback",
-      tags: ["Fashion", "Lifestyle", "Beauty"],
-    },
-    {
-      id: 3,
-      name: "Jordan Kim",
-      handle: "@jordanfitness",
-      avatar: "/placeholder.svg?height=60&width=60",
-      verified: false,
-      followers: "18.3K",
-      engagement: "9.1%",
-      niche: "Fitness & Wellness",
-      platforms: ["instagram", "youtube", "tiktok"],
-      rating: 4.7,
-      responseTime: "4 hours",
-      location: "Austin, TX",
-      services: [
-        { type: "shoutout", price: 20, platform: "instagram", description: "Workout post feature" },
-        { type: "collab", price: 100, platform: "youtube", description: "Joint workout video" },
-        { type: "story", price: 25, platform: "instagram", description: "Fitness story mention" },
-      ],
-      recentWork: "Helped 8 creators grow this month",
-      tags: ["Fitness", "Health", "Motivation"],
-    },
-    {
-      id: 4,
-      name: "Sam Taylor",
-      handle: "@samcooks",
-      avatar: "/placeholder.svg?height=60&width=60",
-      verified: true,
-      followers: "52.1K",
-      engagement: "7.4%",
-      niche: "Food & Cooking",
-      platforms: ["tiktok", "instagram", "youtube"],
-      rating: 4.9,
-      responseTime: "30 minutes",
-      location: "New York, NY",
-      services: [
-        { type: "shoutout", price: 40, platform: "tiktok", description: "Recipe video mention" },
-        { type: "story", price: 30, platform: "instagram", description: "Cooking story feature" },
-        { type: "collab", price: 200, platform: "youtube", description: "Cooking collaboration" },
-      ],
-      recentWork: "Top-rated creator this month",
-      tags: ["Food", "Cooking", "Recipes"],
-    },
-  ]
-
   const getPlatformIcon = (platform: string) => {
-    switch (platform) {
+    switch (platform.toLowerCase()) {
       case "instagram":
         return Instagram
       case "twitter":
@@ -175,16 +193,24 @@ export default function CreatorMarketplacePage() {
 
   const filteredCreators = creators.filter((creator) => {
     const matchesSearch =
-      creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      creator.creatorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       creator.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.niche.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      creator.categories.some((cat) => cat.toLowerCase().includes(searchQuery.toLowerCase()))
 
     const matchesCategory =
-      selectedCategory === "all" || creator.tags.some((tag) => tag.toLowerCase().includes(selectedCategory))
+      selectedCategory === "all" ||
+      creator.categories.some((cat) => cat.toLowerCase().includes(selectedCategory.toLowerCase()))
 
     return matchesSearch && matchesCategory
   })
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#8ef0a7]"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
@@ -256,18 +282,6 @@ export default function CreatorMarketplacePage() {
                     <SelectItem value="lifestyle">Lifestyle</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white min-w-[140px]">
-                    <SelectValue placeholder="Platform" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-300">
-                    <SelectItem value="all">All Platforms</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="tiktok">TikTok</SelectItem>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="twitter">Twitter</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 bg-transparent">
                   <Filter className="h-4 w-4" />
                 </Button>
@@ -280,7 +294,7 @@ export default function CreatorMarketplacePage() {
         <div className="space-y-6">
           {filteredCreators.map((creator) => (
             <Card
-              key={creator.id}
+              key={creator._id}
               className="bg-white/10 backdrop-blur-sm border-white/20 rounded-2xl hover:bg-white/15 transition-all duration-300"
             >
               <CardContent className="p-6">
@@ -289,9 +303,9 @@ export default function CreatorMarketplacePage() {
                   <div className="flex-1">
                     <div className="flex items-start gap-4 mb-4">
                       <Avatar className="h-16 w-16">
-                        <AvatarImage src={creator.avatar || "/placeholder.svg"} alt={creator.name} />
+                        <AvatarImage src="/placeholder.svg" alt={creator.creatorName} />
                         <AvatarFallback className="bg-[#8ef0a7] text-black text-lg">
-                          {creator.name
+                          {creator.creatorName
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -299,18 +313,16 @@ export default function CreatorMarketplacePage() {
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-xl font-bold text-white">{creator.name}</h3>
-                          {creator.verified && (
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">✓</Badge>
-                          )}
+                          <h3 className="text-xl font-bold text-white">{creator.creatorName}</h3>
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">✓</Badge>
                         </div>
                         <p className="text-white/70 mb-2">{creator.handle}</p>
-                        <p className="text-white/60 text-sm mb-3">{creator.niche}</p>
+                        <p className="text-white/60 text-sm mb-3">{creator.bio}</p>
 
                         <div className="flex flex-wrap gap-2 mb-3">
-                          {creator.tags.map((tag) => (
-                            <Badge key={tag} variant="outline" className="border-white/30 text-white/80 text-xs">
-                              {tag}
+                          {creator.categories.map((category) => (
+                            <Badge key={category} variant="outline" className="border-white/30 text-white/80 text-xs">
+                              {category}
                             </Badge>
                           ))}
                         </div>
@@ -320,14 +332,7 @@ export default function CreatorMarketplacePage() {
                             <span className="text-white/60">Followers</span>
                             <p className="text-white font-medium flex items-center gap-1">
                               <Users className="h-3 w-3" />
-                              {creator.followers}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-white/60">Engagement</span>
-                            <p className="text-white font-medium flex items-center gap-1">
-                              <TrendingUp className="h-3 w-3" />
-                              {creator.engagement}
+                              {creator.platforms[0]?.followers || "N/A"}
                             </p>
                           </div>
                           <div>
@@ -338,32 +343,30 @@ export default function CreatorMarketplacePage() {
                             </p>
                           </div>
                           <div>
-                            <span className="text-white/60">Response</span>
+                            <span className="text-white/60">Completed</span>
+                            <p className="text-white font-medium">{creator.completedCampaigns}</p>
+                          </div>
+                          <div>
+                            <span className="text-white/60">Location</span>
                             <p className="text-white font-medium flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {creator.responseTime}
+                              <MapPin className="h-3 w-3" />
+                              {creator.location.split(",")[0]}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 mt-3">
-                          <div className="flex items-center gap-1 text-white/60 text-sm">
-                            <MapPin className="h-3 w-3" />
-                            {creator.location}
-                          </div>
-                          <div className="flex gap-2">
-                            {creator.platforms.map((platform) => {
-                              const Icon = getPlatformIcon(platform)
-                              return (
-                                <div
-                                  key={platform}
-                                  className="h-6 w-6 rounded bg-white/10 flex items-center justify-center"
-                                >
-                                  <Icon className="h-3 w-3 text-white/70" />
-                                </div>
-                              )
-                            })}
-                          </div>
+                        <div className="flex gap-2 mt-3">
+                          {creator.platforms.map((platform) => {
+                            const Icon = getPlatformIcon(platform.platform)
+                            return (
+                              <div
+                                key={platform.platform}
+                                className="h-6 w-6 rounded bg-white/10 flex items-center justify-center"
+                              >
+                                <Icon className="h-3 w-3 text-white/70" />
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
                     </div>
@@ -373,37 +376,45 @@ export default function CreatorMarketplacePage() {
                   <div className="lg:w-80">
                     <h4 className="text-white font-semibold mb-3">Available Services</h4>
                     <div className="space-y-3">
-                      {creator.services.map((service, index) => {
-                        const ServiceIcon = getServiceIcon(service.type)
-                        const PlatformIcon = getPlatformIcon(service.platform)
+                      {Object.entries(creator.rates).map(([type, price]) => {
+                        if (!price) return null
+                        const ServiceIcon = getServiceIcon(type)
                         return (
                           <div
-                            key={index}
+                            key={type}
                             className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <ServiceIcon className="h-4 w-4 text-[#8ef0a7]" />
-                                <span className="text-white font-medium capitalize">{service.type}</span>
-                                <PlatformIcon className="h-3 w-3 text-white/60" />
+                                <span className="text-white font-medium capitalize">{type}</span>
                               </div>
                               <div className="flex items-center gap-1 text-[#8ef0a7] font-bold">
                                 <DollarSign className="h-4 w-4" />
-                                {service.price}
+                                {price}
                               </div>
                             </div>
-                            <p className="text-white/70 text-sm mb-3">{service.description}</p>
-                            <Button size="sm" className="w-full bg-[#8ef0a7] hover:bg-[#7de096] text-black">
-                              Order Now
-                              <ArrowRight className="ml-2 h-3 w-3" />
-                            </Button>
+                            <p className="text-white/70 text-sm mb-3">
+                              {type === "shoutout" && "Get featured in a post"}
+                              {type === "story" && "24-hour story mention"}
+                              {type === "retweet" && "Retweet with engagement"}
+                              {type === "collab" && "Joint content creation"}
+                            </p>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  className="w-full bg-[#8ef0a7] hover:bg-[#7de096] text-black"
+                                  onClick={() => handleOrder({ id: type, price, type }, creator)}
+                                >
+                                  Order Now
+                                  <ArrowRight className="ml-2 h-3 w-3" />
+                                </Button>
+                              </DialogTrigger>
+                            </Dialog>
                           </div>
                         )
                       })}
-                    </div>
-
-                    <div className="mt-4 p-3 bg-[#8ef0a7]/10 rounded-xl border border-[#8ef0a7]/20">
-                      <p className="text-[#8ef0a7] text-sm font-medium">{creator.recentWork}</p>
                     </div>
                   </div>
                 </div>
@@ -412,12 +423,52 @@ export default function CreatorMarketplacePage() {
           ))}
         </div>
 
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-            Load More Creators
-          </Button>
-        </div>
+        {/* Order Dialog */}
+        <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
+          <DialogContent className="bg-gray-900 border-white/20 text-white">
+            <DialogHeader>
+              <DialogTitle>Order {selectedService?.type}</DialogTitle>
+              <DialogDescription className="text-white/70">
+                Place your order with {selectedService?.creator?.creatorName}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                <span>Service: {selectedService?.type}</span>
+                <span className="text-[#8ef0a7] font-bold">${selectedService?.price}</span>
+              </div>
+              <div>
+                <Label htmlFor="requirements" className="text-white">
+                  Special Requirements (Optional)
+                </Label>
+                <Textarea
+                  id="requirements"
+                  value={orderRequirements}
+                  onChange={(e) => setOrderRequirements(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  placeholder="Any specific requirements or instructions..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-4">
+                <Button
+                  variant="outline"
+                  className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  onClick={() => setSelectedService(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-[#8ef0a7] hover:bg-[#7de096] text-black"
+                  onClick={submitOrder}
+                  disabled={isOrdering}
+                >
+                  {isOrdering ? "Processing..." : `Pay $${selectedService?.price}`}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* CTA Section */}
         <Card className="bg-gradient-to-r from-[#8ef0a7]/20 to-emerald-400/20 backdrop-blur-sm border-[#8ef0a7]/30 rounded-3xl overflow-hidden mt-16">

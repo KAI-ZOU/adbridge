@@ -25,11 +25,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CreatorSignupPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     creatorName: "",
     handle: "",
@@ -123,10 +126,41 @@ export default function CreatorSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically save the data to your database
-    console.log("Creator signup data:", formData)
-    // Redirect to creator dashboard
-    router.push("/creator/dashboard")
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch("/api/creator/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: "Your creator profile has been created successfully.",
+        })
+        router.push("/creator/dashboard")
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create creator profile.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Submission error:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const nextStep = () => setStep(step + 1)
@@ -547,8 +581,12 @@ export default function CreatorSignupPage() {
                       >
                         Back
                       </Button>
-                      <Button type="submit" className="flex-1 bg-[#8ef0a7] hover:bg-[#7de096] text-black">
-                        Complete Setup
+                      <Button
+                        type="submit"
+                        className="flex-1 bg-[#8ef0a7] hover:bg-[#7de096] text-black"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Creating Profile..." : "Complete Setup"}
                         <Check className="ml-2 h-4 w-4" />
                       </Button>
                     </div>

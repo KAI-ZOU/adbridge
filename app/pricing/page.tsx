@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { ArrowRight, CheckCircle, X } from "lucide-react"
 
@@ -5,13 +8,141 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Pricing() {
+  const [isLoading, setIsLoading] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const handleSubscribe = async (priceId: string, planName: string) => {
+    setIsLoading(priceId)
+
+    try {
+      const response = await fetch("/api/stripe/create-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ priceId, planName }),
+      })
+
+      if (response.ok) {
+        const { url } = await response.json()
+        window.location.href = url
+      } else {
+        throw new Error("Failed to create subscription")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start subscription. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(null)
+    }
+  }
+
+  const plans = {
+    monthly: [
+      {
+        name: "Starter",
+        price: "$49",
+        priceId: "price_starter_monthly",
+        description: "Perfect for small businesses getting started",
+        features: [
+          "Up to 5 active campaigns",
+          "Basic analytics dashboard",
+          "Email support",
+          "Standard matching algorithm",
+        ],
+        limitations: ["Advanced automation", "Custom reporting"],
+      },
+      {
+        name: "Professional",
+        price: "$99",
+        priceId: "price_professional_monthly",
+        description: "Ideal for growing businesses with active marketing",
+        popular: true,
+        features: [
+          "Up to 20 active campaigns",
+          "Advanced analytics & reporting",
+          "Priority email support",
+          "AI-powered optimization",
+          "Campaign automation tools",
+          "Custom dashboard",
+        ],
+        limitations: [],
+      },
+      {
+        name: "Business",
+        price: "$199",
+        priceId: "price_business_monthly",
+        description: "For established businesses scaling their advertising",
+        features: [
+          "Up to 50 active campaigns",
+          "Advanced analytics & insights",
+          "Phone & email support",
+          "Multi-user collaboration",
+          "API access",
+          "White-label options",
+        ],
+        limitations: [],
+      },
+    ],
+    annually: [
+      {
+        name: "Starter",
+        price: "$39",
+        priceId: "price_starter_annual",
+        description: "Perfect for small businesses getting started",
+        savings: "Save $120/year",
+        features: [
+          "Up to 5 active campaigns",
+          "Basic analytics dashboard",
+          "Email support",
+          "Standard matching algorithm",
+        ],
+        limitations: ["Advanced automation", "Custom reporting"],
+      },
+      {
+        name: "Professional",
+        price: "$79",
+        priceId: "price_professional_annual",
+        description: "Ideal for growing businesses with active marketing",
+        popular: true,
+        savings: "Save $240/year",
+        features: [
+          "Up to 20 active campaigns",
+          "Advanced analytics & reporting",
+          "Priority email support",
+          "AI-powered optimization",
+          "Campaign automation tools",
+          "Custom dashboard",
+        ],
+        limitations: [],
+      },
+      {
+        name: "Business",
+        price: "$159",
+        priceId: "price_business_annual",
+        description: "For established businesses scaling their advertising",
+        savings: "Save $480/year",
+        features: [
+          "Up to 50 active campaigns",
+          "Advanced analytics & insights",
+          "Phone & email support",
+          "Multi-user collaboration",
+          "API access",
+          "White-label options",
+        ],
+        limitations: [],
+      },
+    ],
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">
@@ -54,353 +185,56 @@ export default function Pricing() {
                     </TabsTrigger>
                   </TabsList>
                 </div>
-                <TabsContent value="monthly">
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-                    <Card className="relative">
-                      <CardHeader>
-                        <CardTitle>Starter</CardTitle>
-                        <CardDescription>Perfect for small businesses getting started</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          $49<span className="text-sm font-normal text-muted-foreground">/month</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Up to 5 active campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Basic analytics dashboard</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Email support</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Standard matching algorithm</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <X className="h-4 w-4 text-red-500" />
-                            <span className="text-muted-foreground">Advanced automation</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <X className="h-4 w-4 text-red-500" />
-                            <span className="text-muted-foreground">Custom reporting</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Start Free Trial</Button>
-                      </CardFooter>
-                    </Card>
 
-                    <Card className="relative border-primary shadow-lg">
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                      </div>
-                      <CardHeader>
-                        <CardTitle>Professional</CardTitle>
-                        <CardDescription>Ideal for growing businesses with active marketing</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          $99<span className="text-sm font-normal text-muted-foreground">/month</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Up to 20 active campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Advanced analytics & reporting</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Priority email support</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>AI-powered optimization</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Campaign automation tools</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Custom dashboard</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Start Free Trial</Button>
-                      </CardFooter>
-                    </Card>
-
-                    <Card className="relative">
-                      <CardHeader>
-                        <CardTitle>Business</CardTitle>
-                        <CardDescription>For established businesses scaling their advertising</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          $199<span className="text-sm font-normal text-muted-foreground">/month</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Up to 50 active campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Advanced analytics & insights</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Phone & email support</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Multi-user collaboration</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>API access</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>White-label options</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Start Free Trial</Button>
-                      </CardFooter>
-                    </Card>
-
-                    <Card className="relative">
-                      <CardHeader>
-                        <CardTitle>Enterprise</CardTitle>
-                        <CardDescription>Custom solutions for large organizations</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          Custom<span className="text-sm font-normal text-muted-foreground"> pricing</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Unlimited campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Custom analytics dashboard</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Dedicated account manager</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Custom integrations</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>SLA guarantee</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>On-premise deployment</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full bg-transparent" variant="outline">
-                          Contact Sales
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </TabsContent>
-                <TabsContent value="annually">
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-                    <Card className="relative">
-                      <CardHeader>
-                        <CardTitle>Starter</CardTitle>
-                        <CardDescription>Perfect for small businesses getting started</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          $39<span className="text-sm font-normal text-muted-foreground">/month</span>
-                        </div>
-                        <div className="text-sm text-green-600">Save $120/year</div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Up to 5 active campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Basic analytics dashboard</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Email support</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Standard matching algorithm</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <X className="h-4 w-4 text-red-500" />
-                            <span className="text-muted-foreground">Advanced automation</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <X className="h-4 w-4 text-red-500" />
-                            <span className="text-muted-foreground">Custom reporting</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Start Free Trial</Button>
-                      </CardFooter>
-                    </Card>
-
-                    <Card className="relative border-primary shadow-lg">
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                      </div>
-                      <CardHeader>
-                        <CardTitle>Professional</CardTitle>
-                        <CardDescription>Ideal for growing businesses with active marketing</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          $79<span className="text-sm font-normal text-muted-foreground">/month</span>
-                        </div>
-                        <div className="text-sm text-green-600">Save $240/year</div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Up to 20 active campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Advanced analytics & reporting</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Priority email support</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>AI-powered optimization</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Campaign automation tools</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Custom dashboard</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Start Free Trial</Button>
-                      </CardFooter>
-                    </Card>
-
-                    <Card className="relative">
-                      <CardHeader>
-                        <CardTitle>Business</CardTitle>
-                        <CardDescription>For established businesses scaling their advertising</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          $159<span className="text-sm font-normal text-muted-foreground">/month</span>
-                        </div>
-                        <div className="text-sm text-green-600">Save $480/year</div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Up to 50 active campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Advanced analytics & insights</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Phone & email support</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Multi-user collaboration</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>API access</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>White-label options</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Start Free Trial</Button>
-                      </CardFooter>
-                    </Card>
-
-                    <Card className="relative">
-                      <CardHeader>
-                        <CardTitle>Enterprise</CardTitle>
-                        <CardDescription>Custom solutions for large organizations</CardDescription>
-                        <div className="mt-4 text-4xl font-bold">
-                          Custom<span className="text-sm font-normal text-muted-foreground"> pricing</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="grid gap-3">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Unlimited campaigns</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Custom analytics dashboard</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Dedicated account manager</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Custom integrations</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>SLA guarantee</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>On-premise deployment</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full bg-transparent" variant="outline">
-                          Contact Sales
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </TabsContent>
+                {(["monthly", "annually"] as const).map((period) => (
+                  <TabsContent key={period} value={period}>
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                      {plans[period].map((plan, index) => (
+                        <Card key={plan.name} className={`relative ${plan.popular ? "border-primary shadow-lg" : ""}`}>
+                          {plan.popular && (
+                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                              <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                            </div>
+                          )}
+                          <CardHeader>
+                            <CardTitle>{plan.name}</CardTitle>
+                            <CardDescription>{plan.description}</CardDescription>
+                            <div className="mt-4 text-4xl font-bold">
+                              {plan.price}
+                              <span className="text-sm font-normal text-muted-foreground">/month</span>
+                            </div>
+                            {plan.savings && <div className="text-sm text-green-600">{plan.savings}</div>}
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="grid gap-3">
+                              {plan.features.map((feature) => (
+                                <li key={feature} className="flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <span>{feature}</span>
+                                </li>
+                              ))}
+                              {plan.limitations.map((limitation) => (
+                                <li key={limitation} className="flex items-center gap-2">
+                                  <X className="h-4 w-4 text-red-500" />
+                                  <span className="text-muted-foreground">{limitation}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                          <CardFooter>
+                            <Button
+                              className="w-full"
+                              onClick={() => handleSubscribe(plan.priceId, plan.name)}
+                              disabled={isLoading === plan.priceId}
+                            >
+                              {isLoading === plan.priceId ? "Processing..." : "Start Free Trial"}
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  </TabsContent>
+                ))}
               </Tabs>
             </div>
           </div>
@@ -477,12 +311,15 @@ export default function Pricing() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Link href="/get-started">
-                  <Button size="lg" variant="secondary" className="gap-2">
-                    Start Free Trial
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => handleSubscribe("price_professional_monthly", "Professional")}
+                >
+                  Start Free Trial
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
                 <Link href="/contact">
                   <Button size="lg" variant="outline" className="border-primary-foreground bg-transparent">
                     Contact Sales
@@ -493,7 +330,6 @@ export default function Pricing() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   )
 }
