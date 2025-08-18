@@ -422,7 +422,6 @@ export default function FeaturesPricingPage() {
         </section>
       </main>
 
-      <Footer />
     </div>
   )
 }

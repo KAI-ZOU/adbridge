@@ -108,7 +108,6 @@ export default function GetStarted() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   )
 }
