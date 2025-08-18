@@ -16,8 +16,6 @@ export default function PrivacyPage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
 
-      <Navbar />
-
       <div className="container px-4 py-16 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -222,8 +220,6 @@ export default function PrivacyPage() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }
